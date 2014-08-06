@@ -65,27 +65,28 @@ class SpeedbarMiddleware(object):
                 response['X-TraceUrl'] = reverse('speedbar_trace', args=[request_trace.id])
                 request_trace.persist_log = True
 
-            if 'gzip' not in response.get('Content-Encoding', '') and response.get('Content-Type', '').split(';')[0] in HTML_TYPES:
+        if 'gzip' not in response.get('Content-Encoding', '') and response.get('Content-Type', '').split(';')[0] in HTML_TYPES:
 
-                # Force render of response (from lazy TemplateResponses) before speedbar is injected
-                if hasattr(response, 'render'):
-                    response.render()
-                content = smart_unicode(response.content)
+            # Force render of response (from lazy TemplateResponses) before speedbar is injected
+            if hasattr(response, 'render'):
+                response.render()
+            content = smart_unicode(response.content)
 
-                content = self.replace_templatetag_placeholders(content, metrics)
+            content = self.replace_templatetag_placeholders(content, metrics)
 
-                # Note: The URLs returned here do not exist at this point. The relevant data is added to the cache by a signal handler
-                # once all page processing is finally done. This means it is possible summary values displayed and the detailed
-                # break down won't quite correspond.
-                if getattr(settings, 'SPEEDBAR_PANEL', True):
-                    panel_url = reverse('speedbar_panel', args=[request_trace.id])
-                    panel_placeholder_url = reverse('speedbar_details_for_this_request')
-                    content = content.replace(panel_placeholder_url, panel_url)
-                    request_trace.persist_details = True
+            # Note: The URLs returned here do not exist at this point. The relevant data is added to the cache by a signal handler
+            # once all page processing is finally done. This means it is possible summary values displayed and the detailed
+            # break down won't quite correspond.
+            if getattr(settings, 'SPEEDBAR_PANEL', True):
+                panel_url = reverse('speedbar_panel', args=[request_trace.id])
+                panel_placeholder_url = reverse('speedbar_details_for_this_request')
+                content = content.replace(panel_placeholder_url, panel_url)
+                request_trace.persist_details = True
 
-                response.content = smart_str(content)
-                if response.get('Content-Length', None):
-                    response['Content-Length'] = len(response.content)
+            response.content = smart_str(content)
+            if response.get('Content-Length', None):
+                response['Content-Length'] = len(response.content)
+
         return response
 
     def add_response_headers(self, response, metrics):
