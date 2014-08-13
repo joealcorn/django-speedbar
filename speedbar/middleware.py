@@ -60,10 +60,9 @@ class SpeedbarMiddleware(object):
         if getattr(settings, 'SPEEDBAR_RESPONSE_HEADERS', False):
             self.add_response_headers(response, metrics)
 
-        if hasattr(request, 'user') and request.user is not None and request.user.is_staff:
-            if getattr(settings, 'SPEEDBAR_TRACE', True):
-                response['X-TraceUrl'] = reverse('speedbar_trace', args=[request_trace.id])
-                request_trace.persist_log = True
+        if getattr(settings, 'SPEEDBAR_TRACE', True):
+            response['X-TraceUrl'] = reverse('speedbar_trace', args=[request_trace.id])
+            request_trace.persist_log = True
 
         if 'gzip' not in response.get('Content-Encoding', '') and response.get('Content-Type', '').split(';')[0] in HTML_TYPES:
 
